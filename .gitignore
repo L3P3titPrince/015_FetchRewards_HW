@@ -1,5 +1,6 @@
 # customized ignore rules
 doc/*.pdf
+data/
 
 
 # Byte-compiled / optimized / DLL files
