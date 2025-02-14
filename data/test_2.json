@@ -1,0 +1,46 @@
+{
+    "_id": {
+      "$oid": "5ff1e1eb0a720f0523000575"
+    },
+    "bonusPointsEarned": 500,
+    "bonusPointsEarnedReason": "Receipt number 2 completed, bonus point schedule DEFAULT (5cefdcacf3693e0b50e83a36)",
+    "createDate": {
+      "$date": "2021-01-03T15:25:31.000Z"
+    },
+    "dateScanned": {
+      "$date": "2021-01-03T15:25:31.000Z"
+    },
+    "finishedDate": {
+      "$date": "2021-01-03T15:25:31.000Z"
+    },
+    "modifyDate": {
+      "$date": "2021-01-03T15:25:36.000Z"
+    },
+    "pointsAwardedDate": {
+      "$date": "2021-01-03T15:25:31.000Z"
+    },
+    "pointsEarned": "500.0",
+    "purchaseDate": {
+      "$date": "2021-01-03T00:00:00.000Z"
+    },
+    "purchasedItemCount": 5,
+    "rewardsReceiptItemList": [
+      {
+        "barcode": "4011",
+        "description": "ITEM NOT FOUND",
+        "finalPrice": "26.00",
+        "itemPrice": "26.00",
+        "needsFetchReview": false,
+        "partnerItemId": "1",
+        "preventTargetGapPoints": true,
+        "quantityPurchased": 5,
+        "userFlaggedBarcode": "4011",
+        "userFlaggedNewItem": true,
+        "userFlaggedPrice": "26.00",
+        "userFlaggedQuantity": 5
+      }
+    ],
+    "rewardsReceiptStatus": "FINISHED",
+    "totalSpent": "26.00",
+    "userId": "5ff1e1eacfcf6c399c274ae6"
+  }
