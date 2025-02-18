@@ -14653,11 +14653,21 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
             <li><a href="#3.1.1">3.1.1 receipts.json</a></li>
             <ul>
                 <li><a href="#3.1.1.1">3.1.1.1 Data Preprocessing (Exploration and Observations)</a></li>
-                <li><a href="#3.1.1.2">3.1.1.2 Data Modeling</a></li>
-                <li><a href="#3.1.1.3">3.1.1.3 Data Cleaning</a></li>
+                <li><a href="#3.1.1.2">3.1.1.2 Data Modeling (Design Schema and ER Diagram)</a></li>
+                <li><a href="#3.1.1.3">3.1.1.3 Data ETL (transfer JSON data to relational database)</a></li>
             </ul>
             <li><a href="#3.1.2">3.1.2 users.json</a></li>
+            <ul>
+                <li><a href="#3.1.2.1">3.1.2.1 Data Preprocessing (Exploration and Observations)</a></li>
+                <li><a href="#3.1.2.2">3.1.2.2 Data Modeling (Design Schema and ER Diagram)</a></li>
+                <li><a href="#3.1.2.3">3.1.2.3 Data ETL (transfer JSON data to relational database)</a></li>
+            </ul>
             <li><a href="#3.1.3">3.1.3 brands.json</a></li>
+            <ul>
+                <li><a href="#3.1.3.1">3.1.3.1 Data Preprocessing (Exploration and Observations)</a></li>
+                <li><a href="#3.1.3.2">3.1.3.2 Data Modeling (Design Schema and ER Diagram)</a></li>
+                <li><a href="#3.1.3.3">3.1.3.3 Data ETL (transfer JSON data to relational database)</a></li>
+            </ul>
             <li><a href="#3.1.4">3.1.4 Summary</a></li>
         </ul>
         <li><a href="#3.2">3.2 Generate a query that answers a predetermined business question</a></li>
@@ -14807,22 +14817,6 @@ Import receipts.json into MongoDB:
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span> 
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
 </div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper">
@@ -15460,14 +15454,14 @@ In this section, we will do the following:</p>
 <tr>
 <td></td>
 <td>bonusPointsEarned</td>
-<td>bouns_points_earned</td>
+<td>bonus_points_earned</td>
 <td>DECIMAL(10,2)</td>
 <td></td>
 </tr>
 <tr>
 <td></td>
 <td>bonusPointsEarnedReason</td>
-<td>bouns_points_earned_reason</td>
+<td>bonus_points_earned_reason</td>
 <td>TEXT</td>
 <td></td>
 </tr>
@@ -15550,14 +15544,16 @@ In this section, we will do the following:</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[57]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[90]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">DROP</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">receipts</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">;</span><span class="w"></span>
 <span class="c1">-- create receipts table based on previous designed schema</span>
 <span class="c1">-- receipt_id and user_id are typical MongoDB object id. So the best data type for them is VARCHAR(24)</span>
 <span class="c1">-- TIMESTAMPTZ will have time zone information compared to TIMESTAMP without time zone</span>
 <span class="c1">-- Only first 6 columns are NOT NULL from previous data exploration</span>
+<span class="c1">-- For the data which miss in JSON, I will not provide default to handle NULL constraings value to keep the original JSON data</span>
 <span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">receipts</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
 <span class="w">    </span><span class="n">receipt_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">create_date</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"></span>
@@ -15565,12 +15561,13 @@ In this section, we will do the following:</p>
 <span class="w">    </span><span class="n">modify_date</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">rewards_receipt_status</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="n">bouns_points_earned</span><span class="w"> </span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
+<span class="w">    </span><span class="n">bonus_points_earned</span><span class="w"> </span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
+<span class="w">    </span><span class="n">bonus_points_earned_reason</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">points_awarded_date</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">points_earned</span><span class="w"> </span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
 <span class="w">    </span><span class="n">purchase_date</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">purchased_item_count</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="n">total_spend</span><span class="w"> </span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
+<span class="w">    </span><span class="n">total_spent</span><span class="w"> </span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
 <span class="w">    </span><span class="n">finished_date</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"></span>
 <span class="p">);</span><span class="w"></span>
 <span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">receipts</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
@@ -15597,6 +15594,7 @@ In this section, we will do the following:</p>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
 Done.
+Done.
 0 rows affected.
 </pre>
 </div>
@@ -15605,7 +15603,7 @@ Done.
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[57]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[90]:</div>
 
 
 
@@ -15619,12 +15617,13 @@ Done.
             <th>modify_date</th>
             <th>rewards_receipt_status</th>
             <th>user_id</th>
-            <th>bouns_points_earned</th>
+            <th>bonus_points_earned</th>
+            <th>bonus_points_earned_reason</th>
             <th>points_awarded_date</th>
             <th>points_earned</th>
             <th>purchase_date</th>
             <th>purchased_item_count</th>
-            <th>total_spend</th>
+            <th>total_spent</th>
             <th>finished_date</th>
         </tr>
     </thead>
@@ -15745,8 +15744,8 @@ Done.
 <tr>
 <td>6</td>
 <td>rewardsReceiptItemList.finalPrice</td>
-<td>user_id</td>
-<td>VARCHAR(24)</td>
+<td>final_price</td>
+<td>DECIMAL(10,2)</td>
 <td></td>
 </tr>
 <tr>
@@ -15989,7 +15988,7 @@ Done.
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[69]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[97]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
@@ -16003,14 +16002,14 @@ Done.
 <span class="w">    </span><span class="n">partner_item_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">barcode</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">25</span><span class="p">),</span><span class="w"></span>
 <span class="w">    </span><span class="n">competitive_product</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span><span class="w"></span>
+<span class="w">    </span><span class="n">final_price</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span><span class="w"></span>
 <span class="w">    </span><span class="n">item_price</span><span class="w"> </span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
 <span class="w">    </span><span class="n">quantity_purchased</span><span class="w"> </span><span class="nb">INTEGER</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">rewards_group</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">),</span><span class="w"></span>
 <span class="w">    </span><span class="n">rewards_product_partner_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span><span class="w"></span>
 <span class="w">    </span><span class="n">needs_fetch_review</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">needs_fetch_review_reason</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span><span class="w"></span>
-<span class="w">    </span><span class="n">prevent_target_apt_points</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">prevent_target_gap_points</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">user_flagged_barcode</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span><span class="w"></span>
 <span class="w">    </span><span class="n">user_flagged_description</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span><span class="w"></span>
 <span class="w">    </span><span class="n">user_flagged_new_item</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="p">,</span><span class="w"></span>
@@ -16074,7 +16073,7 @@ Done.
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[69]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[97]:</div>
 
 
 
@@ -16126,6 +16125,2175 @@ Done.
 </div>
 </div>
 </div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h5 id="Summary">Summary<a class="anchor-link" href="#Summary">&#182;</a></h5><ol>
+<li>I created two tables <code>receipts</code> and <code>rewards_receipt_items</code> with designed schema.</li>
+<li></li>
+</ol>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><br></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><br></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h4 id="3.1.1.3-Data-ETL-(transfer-JSON-data-to-relational-database)"><a id="3.1.1.3">3.1.1.3 Data ETL (transfer JSON data to relational database)</a><a class="anchor-link" href="#3.1.1.3-Data-ETL-(transfer-JSON-data-to-relational-database)">&#182;</a></h4><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>I choose to use Solution 1 SQL as the major tool for data ETL.
+Prons: easy to use
+Cons: limited flexibility and don't have erro handling and logging capability.</p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<table>
+<thead><tr>
+<th>Idx</th>
+<th>&#9989; Solution 1: Use SQL to INSERT data</th>
+<th>Solution 2: Use Python to IMPORT data</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Create a temporary table to store JSON raw data</td>
+<td>Use Python library pyscog2 or asyncpg to INSERT data into target table</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Use python LOAD raw JSON into JSONB type column</td>
+<td></td>
+</tr>
+<tr>
+<td>3</td>
+<td>Use SQL to extract data from JSONB column and Flatten &amp; INSERT into <code>receipts</code> table</td>
+<td></td>
+</tr>
+<tr>
+<td>4</td>
+<td>Use SQL to extract data from JSONB column and Flatten &amp; INSERT into <code>rewards_receipt_items</code>  table</td>
+<td></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Validate two tables import successfully</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Create a temporary table to store JSON raw data </li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[71]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">receipts_raw</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">data</span><span class="w"> </span><span class="n">JSONB</span><span class="w"></span>
+<span class="p">);</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">receipts_raw</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+(psycopg2.errors.DuplicateTable) relation &#34;receipts_raw&#34; already exists
+
+[SQL: CREATE TABLE receipts_raw (
+    id SERIAL PRIMARY KEY,
+    data JSONB
+);]
+(Background on this error at: http://sqlalche.me/e/14/f405)
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Use python LOAD raw JSON into JSONB type column</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[55]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">psycopg2</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="c1"># Connect to the remote PostgreSQL database</span>
+<span class="c1"># [TODO]: refactor the code by using asynchio to handle large datasets</span>
+<span class="c1"># [TODO]: replace the connection information with .env related variables to hide sensitive information</span>
+<span class="n">db_connection</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+    <span class="n">host</span><span class="o">=</span><span class="s2">"155.248.207.242"</span><span class="p">,</span>   
+    <span class="n">dbname</span><span class="o">=</span><span class="s2">"fetch_db"</span><span class="p">,</span>
+    <span class="n">user</span><span class="o">=</span><span class="s2">"postgres"</span><span class="p">,</span>
+    <span class="n">password</span><span class="o">=</span><span class="s2">"00wasabi00"</span><span class="p">,</span>
+    <span class="n">port</span><span class="o">=</span><span class="s2">"5432"</span>
+<span class="p">)</span>
+<span class="n">cursor</span> <span class="o">=</span> <span class="n">db_connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+
+<span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">data_error_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">'../data/receipts.json'</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">data_error_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error decoding JSON: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Insert each JSON object separately</span>
+    <span class="n">insert_query</span> <span class="o">=</span> <span class="s2">"INSERT INTO receipts_raw (data) VALUES (</span><span class="si">%s</span><span class="s2">)"</span>
+
+    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">:</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_query</span><span class="p">,</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="p">),))</span>  <span class="c1"># Convert dict to JSONB format</span>
+    
+    <span class="c1"># Commit changes</span>
+    <span class="n">db_connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Successfully inserted </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> records into PostgreSQL!"</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="k">finally</span><span class="p">:</span>
+    <span class="c1"># Close the connection</span>
+    <span class="n">cursor</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">db_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>✅ Successfully inserted 1119 records into PostgreSQL!
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[74]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"> </span><span class="k">data</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">receipts_raw</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+1 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[74]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>data</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{&#x27;_id&#x27;: {&#x27;$oid&#x27;: &#x27;5ff1e1eb0a720f0523000575&#x27;}, &#x27;userId&#x27;: &#x27;5ff1e1eacfcf6c399c274ae6&#x27;, &#x27;createDate&#x27;: {&#x27;$date&#x27;: 1609687531000}, &#x27;modifyDate&#x27;: {&#x27;$date&#x27;: 1609687536000}, &#x27;totalSpent&#x27;: &#x27;26.00&#x27;, &#x27;dateScanned&#x27;: {&#x27;$date&#x27;: 1609687531000}, &#x27;finishedDate&#x27;: {&#x27;$date&#x27;: 1609687531000}, &#x27;pointsEarned&#x27;: &#x27;500.0&#x27;, &#x27;purchaseDate&#x27;: {&#x27;$date&#x27;: 1609632000000}, &#x27;bonusPointsEarned&#x27;: 500, &#x27;pointsAwardedDate&#x27;: {&#x27;$date&#x27;: 1609687531000}, &#x27;purchasedItemCount&#x27;: 5, &#x27;rewardsReceiptStatus&#x27;: &#x27;FINISHED&#x27;, &#x27;rewardsReceiptItemList&#x27;: [{&#x27;barcode&#x27;: &#x27;4011&#x27;, &#x27;itemPrice&#x27;: &#x27;26.00&#x27;, &#x27;finalPrice&#x27;: &#x27;26.00&#x27;, &#x27;description&#x27;: &#x27;ITEM NOT FOUND&#x27;, &#x27;partnerItemId&#x27;: &#x27;1&#x27;, &#x27;needsFetchReview&#x27;: False, &#x27;userFlaggedPrice&#x27;: &#x27;26.00&#x27;, &#x27;quantityPurchased&#x27;: 5, &#x27;userFlaggedBarcode&#x27;: &#x27;4011&#x27;, &#x27;userFlaggedNewItem&#x27;: True, &#x27;userFlaggedQuantity&#x27;: 5, &#x27;preventTargetGapPoints&#x27;: True}], &#x27;bonusPointsEarnedReason&#x27;: &#x27;Receipt number 2 completed, bonus point schedule DEFAULT (5cefdcacf3693e0b50e83a36)&#x27;}</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Use SQL to extract data from JSONB column and Flatten &amp; INSERT into 'receipts'table</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">receipts</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">receipt_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">create_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">date_scanned</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">modify_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">rewards_receipt_status</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">user_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">bonus_points_earned</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">bonus_points_earned_reason</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">points_awarded_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">points_earned</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">purchase_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">purchased_item_count</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">total_spent</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">finished_date</span><span class="w"></span>
+<span class="p">)</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'_id'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$oid'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">receipt_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="c1">-- MongoDB stores dates in millsecons, convert Milliseconds to Seconds</span>
+<span class="w">    </span><span class="n">TO_TIMESTAMP</span><span class="p">((</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'createDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="nb">BIGINT</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">create_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">TO_TIMESTAMP</span><span class="p">((</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'dateScanned'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="nb">BIGINT</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">date_scanned</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">TO_TIMESTAMP</span><span class="p">((</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'modifyDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="nb">BIGINT</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">modify_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'rewardsReceiptStatus'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">rewards_receipt_status</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'userId'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">user_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'bonusPointsEarned'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">bonus_points_earned</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'bonusPointsEarnedReason'</span><span class="p">)::</span><span class="nb">TEXT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">bonus_points_earned_reason</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">TO_TIMESTAMP</span><span class="p">((</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'pointsAwardedDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="nb">BIGINT</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">points_awarded_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'pointsEarned'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">points_earned</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">TO_TIMESTAMP</span><span class="p">((</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'purchaseDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="nb">BIGINT</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">purchase_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'purchasedItemCount'</span><span class="p">)::</span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">purchased_item_count</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'totalSpent'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">total_spent</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">TO_TIMESTAMP</span><span class="p">((</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'finishedDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="nb">BIGINT</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">finished_date</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"> </span>
+<span class="w">    </span><span class="n">receipts_raw</span><span class="p">;</span><span class="w"></span>
+
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">receipts</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Use SQL to extract data from JSONB column and Flatten &amp; INSERT into <code>rewards_receipt_items</code>  table</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[99]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">rewards_receipt_items</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">receipt_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">partner_item_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">barcode</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">competitive_product</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">final_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">item_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">quantity_purchased</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">rewards_group</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">rewards_product_partner_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">needs_fetch_review</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">needs_fetch_review_reason</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">prevent_target_gap_points</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">user_flagged_barcode</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">user_flagged_description</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">user_flagged_new_item</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">user_flagged_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">user_flagged_quantity</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">original_final_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">original_meta_brite_barcode</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">original_meta_brite_item_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">original_meta_brite_quantity_purchased</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">description</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">original_meta_brite_description</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">points_earned</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">points_payer_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">target_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">discounted_item_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">item_number</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">points_not_awarded_reason</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">brand_code</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">competitor_rewards_group</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">original_receipt_item_text</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">deleted</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">price_after_coupon</span><span class="w"></span>
+<span class="p">)</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'_id'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$oid'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">receipt_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'partnerItemId'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">partner_item_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'barcode'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">25</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">barcode</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'competitiveProduct'</span><span class="p">)::</span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">competitive_product</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'finalPrice'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">final_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'itemPrice'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">item_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'quantityPurchased'</span><span class="p">)::</span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">quantity_purchased</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'rewardsGroup'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">rewards_group</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'rewardsProductPartnerId'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">rewards_product_partner_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'needsFetchReview'</span><span class="p">)::</span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">needs_fetch_review</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'needsFetchReviewReason'</span><span class="p">)::</span><span class="nb">TEXT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">needs_fetch_review_reason</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'preventTargetGapPoints'</span><span class="p">)::</span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">prevent_target_gap_points</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'userFlaggedBarcode'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">user_flagged_barcode</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'userFlaggedDescription'</span><span class="p">)::</span><span class="nb">TEXT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">user_flagged_description</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'userFlaggedNewItem'</span><span class="p">)::</span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">user_flagged_new_item</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'userFlaggedPrice'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">user_flagged_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'userFlaggedQuantity'</span><span class="p">)::</span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">user_flagged_quantity</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'originalFinalPrice'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">original_final_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'originalMetaBriteBarcode'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">original_meta_brite_barcode</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'originalMetaBriteItemPrice'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">original_meta_brite_item_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'originalMetaBriteQuantityPurchased'</span><span class="p">)::</span><span class="nb">INTEGER</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">original_meta_brite_quantity_purchased</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'description'</span><span class="p">)::</span><span class="nb">TEXT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'originalMetaBriteDescription'</span><span class="p">)::</span><span class="nb">TEXT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">original_meta_brite_description</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'pointsEarned'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">points_earned</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'pointsPayerId'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">points_payer_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'targetPrice'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">target_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'discountedItemPrice'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">discounted_item_price</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'itemNumber'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">item_number</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'pointsNotAwardedReason'</span><span class="p">)::</span><span class="nb">TEXT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">points_not_awarded_reason</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'brandCode'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">brand_code</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'competitorRewardsGroup'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">competitor_rewards_group</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'originalReceiptItemText'</span><span class="p">)::</span><span class="nb">TEXT</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">original_receipt_item_text</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'deleted'</span><span class="p">)::</span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">deleted</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">item</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'priceAfterCoupon'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">price_after_coupon</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"> </span>
+<span class="w">    </span><span class="n">receipts_raw</span><span class="p">,</span><span class="w"></span>
+<span class="k">LATERAL</span><span class="w"> </span>
+<span class="w">    </span><span class="n">jsonb_array_elements</span><span class="p">(</span><span class="k">data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'rewardsReceiptItemList'</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">item</span><span class="p">;</span><span class="w"></span>
+
+<span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">rewards_receipt_items</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+6941 rows affected.
+1 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[99]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>count</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>6941</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[100]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">rewards_receipt_items</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+1 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[100]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>item_id</th>
+            <th>receipt_id</th>
+            <th>partner_item_id</th>
+            <th>barcode</th>
+            <th>competitive_product</th>
+            <th>final_price</th>
+            <th>item_price</th>
+            <th>quantity_purchased</th>
+            <th>rewards_group</th>
+            <th>rewards_product_partner_id</th>
+            <th>needs_fetch_review</th>
+            <th>needs_fetch_review_reason</th>
+            <th>prevent_target_gap_points</th>
+            <th>user_flagged_barcode</th>
+            <th>user_flagged_description</th>
+            <th>user_flagged_new_item</th>
+            <th>user_flagged_price</th>
+            <th>user_flagged_quantity</th>
+            <th>original_final_price</th>
+            <th>original_meta_brite_barcode</th>
+            <th>original_meta_brite_item_price</th>
+            <th>original_meta_brite_quantity_purchased</th>
+            <th>description</th>
+            <th>original_meta_brite_description</th>
+            <th>points_earned</th>
+            <th>points_payer_id</th>
+            <th>target_price</th>
+            <th>discounted_item_price</th>
+            <th>item_number</th>
+            <th>points_not_awarded_reason</th>
+            <th>brand_code</th>
+            <th>competitor_rewards_group</th>
+            <th>original_receipt_item_text</th>
+            <th>deleted</th>
+            <th>price_after_coupon</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>5ff1e1eb0a720f0523000575</td>
+            <td>1</td>
+            <td>4011</td>
+            <td>None</td>
+            <td>26.00</td>
+            <td>26.00</td>
+            <td>5</td>
+            <td>None</td>
+            <td>None</td>
+            <td>False</td>
+            <td>None</td>
+            <td>True</td>
+            <td>4011</td>
+            <td>None</td>
+            <td>True</td>
+            <td>26.00</td>
+            <td>5</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>ITEM NOT FOUND</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+            <td>None</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Validate two tables import successfully and summary
+I created two tables, <code>receipts</code> and <code>rewards_receipt_items</code>.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[106]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="c1">-- join to validate design and INSERT are successful</span>
+<span class="k">SELECT</span><span class="w"></span>
+<span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">receipt_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">create_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">date_scanned</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">user_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">ri</span><span class="p">.</span><span class="n">item_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">ri</span><span class="p">.</span><span class="n">partner_item_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">ri</span><span class="p">.</span><span class="n">barcode</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">ri</span><span class="p">.</span><span class="n">item_price</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"></span>
+<span class="w">    </span><span class="n">receipts</span><span class="w"> </span><span class="n">r</span><span class="w"></span>
+<span class="w">    </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">rewards_receipt_items</span><span class="w"> </span><span class="n">ri</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">receipt_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ri</span><span class="p">.</span><span class="n">receipt_id</span><span class="w"></span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+3 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[106]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>receipt_id</th>
+            <th>create_date</th>
+            <th>date_scanned</th>
+            <th>user_id</th>
+            <th>item_id</th>
+            <th>partner_item_id</th>
+            <th>barcode</th>
+            <th>item_price</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>5ff1e1eb0a720f0523000575</td>
+            <td>2021-01-03 15:25:31+00:00</td>
+            <td>2021-01-03 15:25:31+00:00</td>
+            <td>5ff1e1eacfcf6c399c274ae6</td>
+            <td>1</td>
+            <td>1</td>
+            <td>4011</td>
+            <td>26.00</td>
+        </tr>
+        <tr>
+            <td>5ff1e1bb0a720f052300056b</td>
+            <td>2021-01-03 15:24:43+00:00</td>
+            <td>2021-01-03 15:24:43+00:00</td>
+            <td>5ff1e194b6a9d73a3a9f1052</td>
+            <td>2</td>
+            <td>1</td>
+            <td>4011</td>
+            <td>1.00</td>
+        </tr>
+        <tr>
+            <td>5ff1e1bb0a720f052300056b</td>
+            <td>2021-01-03 15:24:43+00:00</td>
+            <td>2021-01-03 15:24:43+00:00</td>
+            <td>5ff1e194b6a9d73a3a9f1052</td>
+            <td>3</td>
+            <td>2</td>
+            <td>028400642255</td>
+            <td>10.00</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><br></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="3.1.2-users.json"><a id="3.1.2">3.1.2 users.json</a><a class="anchor-link" href="#3.1.2-users.json">&#182;</a></h3><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Analyze users.json and design a relational normalized schema to store the data.</p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h4 id="3.1.2.1-Data-Preprocessing-(Exploration-and-Observation)"><a id="3.1.2.1">3.1.2.1 Data Preprocessing (Exploration and Observation)</a><a class="anchor-link" href="#3.1.2.1-Data-Preprocessing-(Exploration-and-Observation)">&#182;</a></h4><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Import into MongoDB. We find a lot of duplicate data in this dataset when you consider <code>id.$oid</code> as the unique identifier. 
+If we regard <code>id.$oid</code> as user_id, it will make sense. But in the meantime, we need to create a new column/filed as the unique identifier pramay key.</p>
+<ol>
+<li><code>id.$oid</code> is not a unique identifier. We need to create a new column/filed as the unique identifier pramay key.</li>
+<li><code>active</code> , <code>createdDate</code>, and <code>role</code> are required and NOT NULL columns/fileds. </li>
+<li><code>lastLogin</code>, <code>signUpScource</code>, and <code>state</code> have missing value in the collecion.</li>
+<li>We import total 212 records into MongoDB but there a lot of duplicate data need to be handled correctly.</li>
+</ol>
+<p><img src = "../images/007.png"></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Visulization</p>
+<ol>
+<li>Export JSON file from mongoDB to get a standardized format JSON for visualization.</li>
+<li>Use JSON Crack Schema Validator &amp; Generator to get a standardized JSON schema. Restore as <code>users_schema.json</code> in local directory.</li>
+<li>Use JSON Crack Extension to get visulization.</li>
+</ol>
+<p><img src="../docs/users_std_schema.jpeg"></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Finally, we use DBSchema to get the final schema for users.json file.
+We need to auto-generated a new unique ID for postgreSQL.</p>
+<table>
+<thead><tr>
+<th>Column</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>_id.$oid</td>
+<td>TEXT</td>
+<td>duplicated</td>
+<td>Stores MongoDB ObjectId (<code>$oid</code>).</td>
+</tr>
+<tr>
+<td>active</td>
+<td>BOOLEAN</td>
+<td>NOT NULL</td>
+<td>Indicates if the user is active.</td>
+</tr>
+<tr>
+<td>createdDate.$date</td>
+<td>TIMESTAMP</td>
+<td></td>
+<td>Stores the user creation date (<code>$date</code>).</td>
+</tr>
+<tr>
+<td>lastLogin.$date</td>
+<td>TIMESTAMP</td>
+<td>NULLABLE</td>
+<td>Stores the last login timestamp.</td>
+</tr>
+<tr>
+<td>role</td>
+<td>TEXT</td>
+<td></td>
+<td>Stores the user role.</td>
+</tr>
+<tr>
+<td>signUpSource</td>
+<td>TEXT</td>
+<td>NULLABLE</td>
+<td>Stores the sign-up source.</td>
+</tr>
+<tr>
+<td>state`</td>
+<td>TEXT</td>
+<td>NULLABLE</td>
+<td>Stores the user state.</td>
+</tr>
+</tbody>
+</table>
+<p><img src="../images/008.png"></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h4 id="3.1.2.2-Data-Modeling-(Design-Schema-and-ER-Diagram)"><a id="3.1.2.2">3.1.2.2 Data Modeling (Design Schema and ER Diagram)</a><a class="anchor-link" href="#3.1.2.2-Data-Modeling-(Design-Schema-and-ER-Diagram)">&#182;</a></h4><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Verify whether <code>_id.$oid</code> is unique or not. If not, we need a new field as the PostgreSQL primary key.</li>
+<li>Design the schema for <code>users</code> table in PostgreSQL.</li>
+<li>Create <code>users</code> table with cooresponding columns name, data type and key constrains.</li>
+<li>Validate the scheam for <code>uers</code> table.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[109]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 1. Verifty whether `_id.$oid` is unique in the `users` table. If so, we can use `_id.$oid` as the primary key.</span>
+<span class="c1"># if `_id.$oid` is unique, it will print "True, 'All _id.$oid are unique.'"</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="k">def</span> <span class="nf">is_oid_unique</span><span class="p">(</span><span class="n">json_data_list</span><span class="p">):</span>
+    <span class="n">oid_values</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">json_data_list</span><span class="p">:</span>
+        <span class="c1"># Check if "_id" and "$oid" exist</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"_id"</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"missing _id"</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"Missing '_id' in one or more entries."</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">entry</span><span class="p">[</span><span class="s2">"_id"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"$oid"</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"missing oid"</span><span class="p">,</span> <span class="n">entry</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">"Missing '$oid' in one or more entries."</span>
+        <span class="n">oid</span> <span class="o">=</span> <span class="n">entry</span><span class="p">[</span><span class="s2">"_id"</span><span class="p">][</span><span class="s2">"$oid"</span><span class="p">]</span>
+        <span class="n">oid_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span>
+    
+    <span class="c1"># Check uniqueness</span>
+    <span class="n">unique_oids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">oid_values</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">oid_values</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_oids</span><span class="p">):</span>
+        <span class="n">duplicates</span> <span class="o">=</span> <span class="p">[</span><span class="n">oid</span> <span class="k">for</span> <span class="n">oid</span> <span class="ow">in</span> <span class="n">unique_oids</span> <span class="k">if</span> <span class="n">oid_values</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">oid</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Duplicate ObjectIds found: </span><span class="si">{</span><span class="n">duplicates</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">"All _id.$oid are unique."</span>
+
+<span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">data_error_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">'../data/users.json'</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">data_error_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error decoding JSON: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="n">is_oid_unique</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[109]:</div>
+
+
+
+
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
+<pre>(False,
+ &#34;Duplicate ObjectIds found: [&#39;5fff0f4fb3348b03eb45abb0&#39;, &#39;5ff5d15aeb7c7d12096d91a2&#39;, &#39;5ffcb4bc04929111f6e92608&#39;, &#39;5fa41775898c7a11a6bcef3e&#39;, &#39;5ff8da28b3348b11c9337ac6&#39;, &#39;600741d06e6469120a787853&#39;, &#39;59c124bae4b0299e55b0f330&#39;, &#39;600987d77d983a11f63cfa92&#39;, &#39;600f00d05edb787dce05fb84&#39;, &#39;5ff873d1b3348b11c9337716&#39;, &#39;5ff370c562fde912123a5e0e&#39;, &#39;6000d46cfb296c121a81b20c&#39;, &#39;6000b7aefb296c121a8198b1&#39;, &#39;5ff7264e8f142f11dd189504&#39;, &#39;60025c65fb296c4ef805d9e6&#39;, &#39;600ed42e43298911ce45d1fa&#39;, &#39;60189c94c8b50e11d8454f6b&#39;, &#39;60145a3c84231211ce796c5d&#39;, &#39;600fb1ac73c60b12049027bb&#39;, &#39;6007464b6e64691717e8c1f0&#39;, &#39;60183090c8b50e11d84549c0&#39;, &#39;5fff4beedf9ace121f0c17ea&#39;, &#39;6008893b633aab121bb8e0a9&#39;, &#39;600f47f06fd0dc1768a34a12&#39;, &#39;60229990b57b8a12187fe9e0&#39;, &#39;5ff4ce3dc3d63511e2a484dc&#39;, &#39;5ff36a3862fde912123a4460&#39;, &#39;600f41b2bd196811e68ea219&#39;, &#39;5ff36be7135e7011bcb856d3&#39;, &#39;60088d55633aab121bb8e41a&#39;, &#39;5ff47392c3d63511e2a47881&#39;, &#39;5ffc9d87b3348b11c9338920&#39;, &#39;6000b75bbe5fc96dfee1d4d3&#39;, &#39;5ffc8ff9b3348b11c9338896&#39;, &#39;5a43c08fe4b014fd6b6a0612&#39;, &#39;60005709bd4dff11dda90ac1&#39;, &#39;6011f31ea4b74c18d3a8c476&#39;, &#39;5ff36d0362fde912123a5535&#39;, &#39;6009e60450b3311194385009&#39;, &#39;5fc961c3b8cfca11a077dd33&#39;, &#39;5ff1e194b6a9d73a3a9f1052&#39;, &#39;6011f33173c60b1804ce1102&#39;, &#39;60186237c8b50e11d8454d5f&#39;, &#39;60145ff384231211ce796d51&#39;, &#39;5fbc35711d967d1222cbfefc&#39;, &#39;5ff4ce33c3d63511e2a484b6&#39;, &#39;5ff73b90eb7c7d31ca8a452b&#39;, &#39;5ff873ddb3348b11c9337733&#39;, &#39;600748196e64691717e8d4f0&#39;, &#39;6014558767804a1228b20d00&#39;, &#39;5ff7930fb3348b11c93372a6&#39;, &#39;5ff7268eeb7c7d12096da2a9&#39;, &#39;601c2c05969c0b11f7d0b097&#39;, &#39;5ffcb47d04929111f6e9256c&#39;, &#39;6002541ae257124ec6b99a3a&#39;, &#39;60118bcfa4b74c18d3a8c0d7&#39;, &#39;5ffe115404929101d0aaebb2&#39;, &#39;5ff1e1eacfcf6c399c274ae6&#39;, &#39;60147d2ac8b50e11d8453f53&#39;, &#39;5ffc8f9704929111f6e922bf&#39;, &#39;6010bddaa4b74c120bd19dfb&#39;, &#39;600056a3f7e5b011fce897b0&#39;, &#39;60189c74c8b50e11d8454eff&#39;, &#39;5ff8ce8504929111f6e913cb&#39;, &#39;5fb0a078be5fc9775c1f3945&#39;, &#39;60132acb73c60b3ca7f3ba32&#39;, &#39;600f008f4329897eac237bd8&#39;, &#39;60074b49325c8a1794623876&#39;, &#39;5fff55dabd4dff11dda8f5f1&#39;, &#39;54943462e4b07e684157a532&#39;]&#34;)</pre>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Design the schema for <code>users</code> table in PostgreSQL.<ul>
+<li>Create <code>record_id</code> UUID as the primary key for each user activity record.</li>
+<li><code>_id.$oid</code> is actually <code>user_id</code> in <code>receipts</code> table. Should be the Foreign Key.</li>
+</ul>
+</li>
+</ol>
+<table>
+<thead><tr>
+<th></th>
+<th>JSON Name</th>
+<th>PostgreSQL Column Name</th>
+<th>Type</th>
+<th>Constraints</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td></td>
+<td>record_id</td>
+<td>UUID</td>
+<td>Primary Key</td>
+<td>Random unique identifer for each user activity record</td>
+</tr>
+<tr>
+<td>2</td>
+<td>_id.$oid</td>
+<td>user_id</td>
+<td>VARCHAR(24)</td>
+<td>Foreign Key</td>
+<td>Consistent with <code>receipts.user_id</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>active</td>
+<td>active</td>
+<td>BOOLEAN</td>
+<td>NOT NULL</td>
+<td>Indicates if the user is active.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>createdDate.$date</td>
+<td>created_date</td>
+<td>TIMESTAMP</td>
+<td></td>
+<td>Stores the user creation date (<code>$date</code>).</td>
+</tr>
+<tr>
+<td>5</td>
+<td>role</td>
+<td>role</td>
+<td>TEXT</td>
+<td></td>
+<td>Stores the user role.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>lastLogin.$date</td>
+<td>last_login_date</td>
+<td>TIMESTAMP</td>
+<td>NULLABLE</td>
+<td>Stores the last login timestamp.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>signUpSource</td>
+<td>sign_up_source</td>
+<td>TEXT</td>
+<td>NULLABLE</td>
+<td>Stores the sign-up source.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>state</td>
+<td>state</td>
+<td>TEXT</td>
+<td>NULLABLE</td>
+<td>Stores the user state.</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Create <code>users</code> table with cooresponding columns name, data type and key constrains.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[138]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">DROP</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="k">CASCADE</span><span class="p">;</span><span class="w"></span>
+<span class="c1">-- create users table</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="k">IF</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="n">users</span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">record_id</span><span class="w"> </span><span class="n">UUID</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">gen_random_uuid</span><span class="p">()</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="n">user_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span><span class="w"></span>
+<span class="w">    </span><span class="n">active</span><span class="w"> </span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">created_date</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">role</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">last_login_date</span><span class="w"> </span><span class="k">TIMESTAMP</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">sign_up_source</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="k">state</span><span class="w"> </span><span class="nb">TEXT</span><span class="w"></span>
+<span class="p">);</span><span class="w"></span>
+
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+Done.
+Done.
+0 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[138]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>record_id</th>
+            <th>user_id</th>
+            <th>active</th>
+            <th>created_date</th>
+            <th>role</th>
+            <th>last_login_date</th>
+            <th>sign_up_source</th>
+            <th>state</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Validate the scheam for <code>uers</code> table.</li>
+</ol>
+<p><img src = "../images/009.png"></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><br></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h4 id="3.1.2.3-Data-ETL-(Transfer-JSON-data-to-relational-database)"><a id="3.1.2.3">3.1.2.3 Data ETL (Transfer JSON data to relational database)</a><a class="anchor-link" href="#3.1.2.3-Data-ETL-(Transfer-JSON-data-to-relational-database)">&#182;</a></h4><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Create a temporary <code>users_raw</code>table to upload JSON file into PostgreSQL database.</li>
+<li>Use Pyothon to upload JSON file into the temporary <code>users_raw</code> table.</li>
+<li>Use SQL to extract data from the temporary <code>users_raw</code> table and load it into a new table <code>users</code> in the PostgreSQL database.</li>
+<li>Validate the <code>users</code> table by join it with <code>receipts</code> table.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Create a temporary <code>users_raw</code>table to upload JSON file into PostgreSQL database.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="c1">-- DROP TABLE IF EXISTS users_raw;</span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">users_raw</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">json_data</span><span class="w"> </span><span class="n">JSONB</span><span class="w"></span>
+<span class="p">);</span><span class="w"></span>
+
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">users_raw</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+Done.
+Done.
+0 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[&nbsp;]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>id</th>
+            <th>json_data</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Use Pyothon to upload JSON file into the temporary <code>users_raw</code> table.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[114]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">psycopg2</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="c1"># Connect to the remote PostgreSQL database</span>
+<span class="c1"># [TODO]: refactor the code by using asynchio to handle large datasets</span>
+<span class="c1"># [TODO]: replace the connection information with .env related variables to hide sensitive information</span>
+<span class="n">db_connection</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
+    <span class="n">host</span><span class="o">=</span><span class="s2">"155.248.207.242"</span><span class="p">,</span>   
+    <span class="n">dbname</span><span class="o">=</span><span class="s2">"fetch_db"</span><span class="p">,</span>
+    <span class="n">user</span><span class="o">=</span><span class="s2">"postgres"</span><span class="p">,</span>
+    <span class="n">password</span><span class="o">=</span><span class="s2">"00wasabi00"</span><span class="p">,</span>
+    <span class="n">port</span><span class="o">=</span><span class="s2">"5432"</span>
+<span class="p">)</span>
+<span class="n">cursor</span> <span class="o">=</span> <span class="n">db_connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+
+<span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">data_error_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">'../data/users.json'</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">data_error_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error decoding JSON: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="c1"># Insert each JSON object separately</span>
+    <span class="n">insert_query</span> <span class="o">=</span> <span class="s2">"INSERT INTO users_raw (json_data) VALUES (</span><span class="si">%s</span><span class="s2">)"</span>
+
+    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">:</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_query</span><span class="p">,</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="p">),))</span>  <span class="c1"># Convert dict to JSONB format</span>
+    
+    <span class="c1"># Commit changes</span>
+    <span class="n">db_connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Successfully inserted </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> records into PostgreSQL!"</span><span class="p">)</span>
+
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="k">finally</span><span class="p">:</span>
+    <span class="c1"># Close the connection</span>
+    <span class="n">cursor</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">db_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre>Successfully inserted 495 records into PostgreSQL!
+</pre>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[117]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">users_raw</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+5 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[117]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>id</th>
+            <th>json_data</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>1</td>
+            <td>{&#x27;_id&#x27;: {&#x27;$oid&#x27;: &#x27;5ff1e194b6a9d73a3a9f1052&#x27;}, &#x27;role&#x27;: &#x27;consumer&#x27;, &#x27;state&#x27;: &#x27;WI&#x27;, &#x27;active&#x27;: True, &#x27;lastLogin&#x27;: {&#x27;$date&#x27;: 1609687537858}, &#x27;createdDate&#x27;: {&#x27;$date&#x27;: 1609687444800}, &#x27;signUpSource&#x27;: &#x27;Email&#x27;}</td>
+        </tr>
+        <tr>
+            <td>2</td>
+            <td>{&#x27;_id&#x27;: {&#x27;$oid&#x27;: &#x27;5ff1e194b6a9d73a3a9f1052&#x27;}, &#x27;role&#x27;: &#x27;consumer&#x27;, &#x27;state&#x27;: &#x27;WI&#x27;, &#x27;active&#x27;: True, &#x27;lastLogin&#x27;: {&#x27;$date&#x27;: 1609687537858}, &#x27;createdDate&#x27;: {&#x27;$date&#x27;: 1609687444800}, &#x27;signUpSource&#x27;: &#x27;Email&#x27;}</td>
+        </tr>
+        <tr>
+            <td>3</td>
+            <td>{&#x27;_id&#x27;: {&#x27;$oid&#x27;: &#x27;5ff1e194b6a9d73a3a9f1052&#x27;}, &#x27;role&#x27;: &#x27;consumer&#x27;, &#x27;state&#x27;: &#x27;WI&#x27;, &#x27;active&#x27;: True, &#x27;lastLogin&#x27;: {&#x27;$date&#x27;: 1609687537858}, &#x27;createdDate&#x27;: {&#x27;$date&#x27;: 1609687444800}, &#x27;signUpSource&#x27;: &#x27;Email&#x27;}</td>
+        </tr>
+        <tr>
+            <td>4</td>
+            <td>{&#x27;_id&#x27;: {&#x27;$oid&#x27;: &#x27;5ff1e1eacfcf6c399c274ae6&#x27;}, &#x27;role&#x27;: &#x27;consumer&#x27;, &#x27;state&#x27;: &#x27;WI&#x27;, &#x27;active&#x27;: True, &#x27;lastLogin&#x27;: {&#x27;$date&#x27;: 1609687530597}, &#x27;createdDate&#x27;: {&#x27;$date&#x27;: 1609687530554}, &#x27;signUpSource&#x27;: &#x27;Email&#x27;}</td>
+        </tr>
+        <tr>
+            <td>5</td>
+            <td>{&#x27;_id&#x27;: {&#x27;$oid&#x27;: &#x27;5ff1e194b6a9d73a3a9f1052&#x27;}, &#x27;role&#x27;: &#x27;consumer&#x27;, &#x27;state&#x27;: &#x27;WI&#x27;, &#x27;active&#x27;: True, &#x27;lastLogin&#x27;: {&#x27;$date&#x27;: 1609687537858}, &#x27;createdDate&#x27;: {&#x27;$date&#x27;: 1609687444800}, &#x27;signUpSource&#x27;: &#x27;Email&#x27;}</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Use SQL to extract data from the temporary <code>users_raw</code> table and load it into a new table <code>users</code> in the PostgreSQL database.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[139]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+0 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[139]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>record_id</th>
+            <th>user_id</th>
+            <th>active</th>
+            <th>created_date</th>
+            <th>role</th>
+            <th>last_login_date</th>
+            <th>sign_up_source</th>
+            <th>state</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[141]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="c1">-- no need to INSERT anything to record_id. It will trigger DEFAULT gen_random_uuid()</span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">user_id</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="n">active</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="n">created_date</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="k">role</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="n">last_login_date</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="n">sign_up_source</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="k">state</span><span class="w"></span>
+<span class="p">)</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">    </span><span class="n">json_data</span><span class="o">-&gt;</span><span class="s1">'_id'</span><span class="o">-&gt;&gt;</span><span class="s1">'$oid'</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">user_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="p">(</span><span class="n">json_data</span><span class="o">-&gt;&gt;</span><span class="s1">'active'</span><span class="p">)::</span><span class="nb">BOOLEAN</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">active</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">TO_TIMESTAMP</span><span class="p">((</span><span class="n">json_data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'createdDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="nb">BIGINT</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">created_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">json_data</span><span class="o">-&gt;&gt;</span><span class="s1">'role'</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">role</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">TO_TIMESTAMP</span><span class="p">((</span><span class="n">json_data</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'lastLogin'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="nb">BIGINT</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1000</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">last_login_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">json_data</span><span class="o">-&gt;&gt;</span><span class="s1">'signUpSource'</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">sign_up_source</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">json_data</span><span class="o">-&gt;&gt;</span><span class="s1">'state'</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="k">state</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"></span>
+<span class="w">    </span><span class="n">users_raw</span><span class="p">;</span><span class="w"></span>
+
+<span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">users</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+495 rows affected.
+1 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[141]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>count</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>495</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ol>
+<li>Validate the <code>users</code> table by join it with <code>receipts</code> table.</li>
+</ol>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[151]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"></span>
+<span class="w">    </span><span class="n">u</span><span class="p">.</span><span class="n">record_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">u</span><span class="p">.</span><span class="n">user_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">receipt_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">r</span><span class="p">.</span><span class="n">create_date</span><span class="w"></span>
+<span class="k">FROM</span><span class="w"></span>
+<span class="w">    </span><span class="n">users</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">u</span><span class="w"></span>
+<span class="w">    </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">receipts</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">u</span><span class="p">.</span><span class="n">user_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">.</span><span class="n">user_id</span><span class="w"></span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+4 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[151]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>record_id</th>
+            <th>user_id</th>
+            <th>receipt_id</th>
+            <th>create_date</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>ed42f7d5-15ab-4493-a5a6-0532eab527ba</td>
+            <td>5ff1e1eacfcf6c399c274ae6</td>
+            <td>5ff1e1eb0a720f0523000575</td>
+            <td>2021-01-03 15:25:31+00:00</td>
+        </tr>
+        <tr>
+            <td>bc9f2bb7-54d4-416d-9d94-22dec550faf3</td>
+            <td>5ff1e1eacfcf6c399c274ae6</td>
+            <td>5ff1e1eb0a720f0523000575</td>
+            <td>2021-01-03 15:25:31+00:00</td>
+        </tr>
+        <tr>
+            <td>9063add1-5ffb-460e-843f-8ec8551a623f</td>
+            <td>5ff1e1eacfcf6c399c274ae6</td>
+            <td>5ff1e1eb0a720f0523000575</td>
+            <td>2021-01-03 15:25:31+00:00</td>
+        </tr>
+        <tr>
+            <td>571f34e1-948a-47bf-952b-da0cd4a337a9</td>
+            <td>5ff1e1eacfcf6c399c274ae6</td>
+            <td>5ff1e1eb0a720f0523000575</td>
+            <td>2021-01-03 15:25:31+00:00</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><br></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="3.1.3-brands.json"><a id="3.1.3">3.1.3 brands.json</a><a class="anchor-link" href="#3.1.3-brands.json">&#182;</a></h3><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Anaylze brands.json and design a relation normalized schema for the data.</p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h4 id="3.1.3.1-Data-Preprocessing-(Exploration-and-Observation)"><a id="3.1.3.1">3.1.3.1 Data Preprocessing (Exploration and Observation)</a><a class="anchor-link" href="#3.1.3.1-Data-Preprocessing-(Exploration-and-Observation)">&#182;</a></h4><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>Import JSON into MongoDB.</p>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -16177,7 +18345,7 @@ Done.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><br></p>
+<h4 id="3.1.3.2-Data-Modeling-(Design-Scheam)"><a id="3.1.3.2">3.1.3.2 Data Modeling (Design Scheam)</a><a class="anchor-link" href="#3.1.3.2-Data-Modeling-(Design-Scheam)">&#182;</a></h4><p><a href="#1.Summary">Click this Link back to Top</a></p>
 
 </div>
 </div>
@@ -16189,7 +18357,7 @@ Done.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h4 id="3.1.1.3-Data-ETL"><a id="3.1.1.3">3.1.1.3 Data ETL</a><a class="anchor-link" href="#3.1.1.3-Data-ETL">&#182;</a></h4><p><a href="#1.Summary">Click this Link back to Top</a></p>
+<hr>
 
 </div>
 </div>
@@ -16201,6 +18369,95 @@ Done.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h4 id="3.1.3.3-Data-ETL-(Transfer-JSON-data-to-relational-database)"><a id="3.1.3.3">3.1.3.3 Data ETL (Transfer JSON data to relational database)</a><a class="anchor-link" href="#3.1.3.3-Data-ETL-(Transfer-JSON-data-to-relational-database)">&#182;</a></h4><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="3.1.4-Summary"><a id="3.1.4">3.1.4 Summary</a><a class="anchor-link" href="#3.1.4-Summary">&#182;</a></h3><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<hr>
 
 </div>
 </div>
@@ -16212,35 +18469,71 @@ Done.
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<table>
-<thead><tr>
-<th>Idx</th>
-<th>&#9989; Solution 1: Use SQL to INSERT data</th>
-<th>Solution 2: Use Python to IMPORT data</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>1</td>
-<td>Create a temporary table to store JSON raw data</td>
-<td>Use Python library pyscog2 or asyncpg to INSERT data into target table</td>
-</tr>
-<tr>
-<td>2</td>
-<td>Use python LOAD raw JSON into JSONB type column</td>
-<td>100</td>
-</tr>
-<tr>
-<td>3</td>
-<td>Use SQL to extract data from JSONB column and Flatten &amp; INSERT into target table</td>
-<td>100</td>
-</tr>
-</tbody>
-</table>
+<h2 id="3.2-Generate-a-query-that-answers-a-predetermined-business-question"><a id="3.2">3.2 Generate a query that answers a predetermined business question</a><a class="anchor-link" href="#3.2-Generate-a-query-that-answers-a-predetermined-business-question">&#182;</a></h2><p><a href="#1.Summary">Click this Link back to Top</a></p>
 
 </div>
 </div>
 </div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="3.3-Generate-a-query-to-capture-data-quality-issues-against-the-new-structured-relational-data-model"><a id="3.3">3.3 Generate a query to capture data quality issues against the new structured relational data model</a><a class="anchor-link" href="#3.3-Generate-a-query-to-capture-data-quality-issues-against-the-new-structured-relational-data-model">&#182;</a></h2><p><a href="#1.Summary">Click this Link back to Top</a></p>
+
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -16262,150 +18555,18 @@ Done.
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">psycopg2</span>
-<span class="kn">import</span> <span class="nn">json</span>
-
-<span class="c1"># Connect to the remote PostgreSQL database</span>
-<span class="c1"># [TODO]: replace the connection information with .env related variables to hide sensitive information</span>
-<span class="n">db_connection</span> <span class="o">=</span> <span class="n">psycopg2</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span>
-    <span class="n">host</span><span class="o">=</span><span class="s2">"155.248.207.242"</span><span class="p">,</span>   
-    <span class="n">dbname</span><span class="o">=</span><span class="s2">"fetch_db"</span><span class="p">,</span>
-    <span class="n">user</span><span class="o">=</span><span class="s2">"postgres"</span><span class="p">,</span>
-    <span class="n">password</span><span class="o">=</span><span class="s2">"00wasabi00"</span><span class="p">,</span>
-    <span class="n">port</span><span class="o">=</span><span class="s2">"5432"</span>
-<span class="p">)</span>
-<span class="n">cursor</span> <span class="o">=</span> <span class="n">db_connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
-
-
-<span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="n">data_error_list</span> <span class="o">=</span> <span class="p">[]</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">'../data/receipts.json'</span><span class="p">,</span> <span class="s1">'r'</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
-    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">file</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-            <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="n">data_error_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error decoding JSON: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="c1"># Insert each JSON object separately</span>
-    <span class="n">insert_query</span> <span class="o">=</span> <span class="s2">"INSERT INTO receipts_raw (data) VALUES (</span><span class="si">%s</span><span class="s2">)"</span>
-
-    <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">data_list</span><span class="p">:</span>
-        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">insert_query</span><span class="p">,</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">record</span><span class="p">),))</span>  <span class="c1"># Convert dict to JSONB format</span>
-    
-    <span class="c1"># Commit changes</span>
-    <span class="n">db_connection</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Successfully inserted </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data_list</span><span class="p">)</span><span class="si">}</span><span class="s2"> records into PostgreSQL!"</span><span class="p">)</span>
-
-<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="k">finally</span><span class="p">:</span>
-    <span class="c1"># Close the connection</span>
-    <span class="n">cursor</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-    <span class="n">db_connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-
-
-
-<span class="c1"># # Insert each JSON object into the table</span>
-<span class="c1"># for record in data:</span>
-<span class="c1">#     cur.execute(</span>
-<span class="c1">#         """</span>
-<span class="c1">#         INSERT INTO receipts_raw (data) VALUES (%s);</span>
-<span class="c1">#         """,</span>
-<span class="c1">#         [json.dumps(record)]  # Convert the Python dictionary back to a JSON string</span>
-<span class="c1">#     )</span>
-
-<span class="c1"># # Commit and close the connection</span>
-<span class="c1"># conn.commit()</span>
-<span class="c1"># cur.close()</span>
-<span class="c1"># conn.close()</span>
-
-
-
-
-<span class="c1"># # Path to the local receipts.json file</span>
-<span class="c1"># JSON_FILE_PATH = "receipts.json"</span>
-
-<span class="c1"># def import_json_to_postgres():</span>
-<span class="c1">#     # Read the local JSON file</span>
-<span class="c1">#     with open(JSON_FILE_PATH, "r", encoding="utf-8") as file:</span>
-<span class="c1">#         data_list = json.load(file)  # Load JSON as a list</span>
-
-<span class="c1">#     if not isinstance(data_list, list):</span>
-<span class="c1">#         print("JSON file does not contain a list!")</span>
-<span class="c1">#         return</span>
-
-<span class="c1">#     try:</span>
-<span class="c1">#         # Connect to PostgreSQL</span>
-<span class="c1">#         conn = psycopg2.connect(**DB_CONFIG)</span>
-<span class="c1">#         cursor = conn.cursor()</span>
-
-<span class="c1">#         # Insert each JSON object separately</span>
-<span class="c1">#         insert_query = "INSERT INTO receipt_raw (data) VALUES (%s)"</span>
-
-<span class="c1">#         for record in data_list:</span>
-<span class="c1">#             cursor.execute(insert_query, (json.dumps(record),))  # Convert dict to JSONB format</span>
-        
-<span class="c1">#         # Commit changes</span>
-<span class="c1">#         conn.commit()</span>
-<span class="c1">#         print(f"✅ Successfully inserted {len(data_list)} records into PostgreSQL!")</span>
-
-<span class="c1">#     except Exception as e:</span>
-<span class="c1">#         print(f"❌ Error: {e}")</span>
-
-<span class="c1">#     finally:</span>
-<span class="c1">#         # Close the connection</span>
-<span class="c1">#         cursor.close()</span>
-<span class="c1">#         conn.close()</span>
-
-<span class="c1"># # Run the function</span>
-<span class="c1"># import_json_to_postgres()</span>
-</pre></div>
-
-     </div>
-</div>
-</div>
-</div>
-
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-
-
-<div class="jp-OutputArea jp-Cell-outputArea">
-
-<div class="jp-OutputArea-child">
-
-    
-    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-
-
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
-<pre>✅ Successfully inserted 1119 records into PostgreSQL!
-</pre>
-</div>
-</div>
-
-</div>
-
-</div>
-
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[56]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[75]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
-<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">receipts_raw</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">error_log</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">    </span><span class="n">error_id</span><span class="w"> </span><span class="nb">SERIAL</span><span class="w"> </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">receipt_id</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span><span class="w"></span>
+<span class="w">    </span><span class="n">error_message</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">,</span><span class="w"></span>
+<span class="w">    </span><span class="n">error_timestamp</span><span class="w"> </span><span class="n">TIMESTAMPTZ</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">NOW</span><span class="p">(),</span><span class="w"></span>
+<span class="w">    </span><span class="n">json_data</span><span class="w"> </span><span class="n">JSONB</span><span class="w"></span>
+<span class="p">);</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">error_log</span><span class="p">;</span><span class="w"></span>
 </pre></div>
 
      </div>
@@ -16428,7 +18589,8 @@ Done.
 
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
 <pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
-2 rows affected.
+Done.
+0 rows affected.
 </pre>
 </div>
 </div>
@@ -16436,7 +18598,7 @@ Done.
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[56]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[75]:</div>
 
 
 
@@ -16444,19 +18606,14 @@ Done.
 <table>
     <thead>
         <tr>
-            <th>id</th>
-            <th>data</th>
+            <th>error_id</th>
+            <th>receipt_id</th>
+            <th>error_message</th>
+            <th>error_timestamp</th>
+            <th>json_data</th>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td>1</td>
-            <td>{&#x27;_id&#x27;: {&#x27;$oid&#x27;: &#x27;5ff1e1eb0a720f0523000575&#x27;}, &#x27;userId&#x27;: &#x27;5ff1e1eacfcf6c399c274ae6&#x27;, &#x27;createDate&#x27;: {&#x27;$date&#x27;: 1609687531000}, &#x27;modifyDate&#x27;: {&#x27;$date&#x27;: 1609687536000}, &#x27;totalSpent&#x27;: &#x27;26.00&#x27;, &#x27;dateScanned&#x27;: {&#x27;$date&#x27;: 1609687531000}, &#x27;finishedDate&#x27;: {&#x27;$date&#x27;: 1609687531000}, &#x27;pointsEarned&#x27;: &#x27;500.0&#x27;, &#x27;purchaseDate&#x27;: {&#x27;$date&#x27;: 1609632000000}, &#x27;bonusPointsEarned&#x27;: 500, &#x27;pointsAwardedDate&#x27;: {&#x27;$date&#x27;: 1609687531000}, &#x27;purchasedItemCount&#x27;: 5, &#x27;rewardsReceiptStatus&#x27;: &#x27;FINISHED&#x27;, &#x27;rewardsReceiptItemList&#x27;: [{&#x27;barcode&#x27;: &#x27;4011&#x27;, &#x27;itemPrice&#x27;: &#x27;26.00&#x27;, &#x27;finalPrice&#x27;: &#x27;26.00&#x27;, &#x27;description&#x27;: &#x27;ITEM NOT FOUND&#x27;, &#x27;partnerItemId&#x27;: &#x27;1&#x27;, &#x27;needsFetchReview&#x27;: False, &#x27;userFlaggedPrice&#x27;: &#x27;26.00&#x27;, &#x27;quantityPurchased&#x27;: 5, &#x27;userFlaggedBarcode&#x27;: &#x27;4011&#x27;, &#x27;userFlaggedNewItem&#x27;: True, &#x27;userFlaggedQuantity&#x27;: 5, &#x27;preventTargetGapPoints&#x27;: True}], &#x27;bonusPointsEarnedReason&#x27;: &#x27;Receipt number 2 completed, bonus point schedule DEFAULT (5cefdcacf3693e0b50e83a36)&#x27;}</td>
-        </tr>
-        <tr>
-            <td>2</td>
-            <td>{&#x27;_id&#x27;: {&#x27;$oid&#x27;: &#x27;5ff1e1bb0a720f052300056b&#x27;}, &#x27;userId&#x27;: &#x27;5ff1e194b6a9d73a3a9f1052&#x27;, &#x27;createDate&#x27;: {&#x27;$date&#x27;: 1609687483000}, &#x27;modifyDate&#x27;: {&#x27;$date&#x27;: 1609687488000}, &#x27;totalSpent&#x27;: &#x27;11.00&#x27;, &#x27;dateScanned&#x27;: {&#x27;$date&#x27;: 1609687483000}, &#x27;finishedDate&#x27;: {&#x27;$date&#x27;: 1609687483000}, &#x27;pointsEarned&#x27;: &#x27;150.0&#x27;, &#x27;purchaseDate&#x27;: {&#x27;$date&#x27;: 1609601083000}, &#x27;bonusPointsEarned&#x27;: 150, &#x27;pointsAwardedDate&#x27;: {&#x27;$date&#x27;: 1609687483000}, &#x27;purchasedItemCount&#x27;: 2, &#x27;rewardsReceiptStatus&#x27;: &#x27;FINISHED&#x27;, &#x27;rewardsReceiptItemList&#x27;: [{&#x27;barcode&#x27;: &#x27;4011&#x27;, &#x27;itemPrice&#x27;: &#x27;1&#x27;, &#x27;finalPrice&#x27;: &#x27;1&#x27;, &#x27;description&#x27;: &#x27;ITEM NOT FOUND&#x27;, &#x27;partnerItemId&#x27;: &#x27;1&#x27;, &#x27;quantityPurchased&#x27;: 1}, {&#x27;barcode&#x27;: &#x27;028400642255&#x27;, &#x27;itemPrice&#x27;: &#x27;10.00&#x27;, &#x27;finalPrice&#x27;: &#x27;10.00&#x27;, &#x27;description&#x27;: &#x27;DORITOS TORTILLA CHIP SPICY SWEET CHILI REDUCED FAT BAG 1 OZ&#x27;, &#x27;rewardsGroup&#x27;: &#x27;DORITOS SPICY SWEET CHILI SINGLE SERVE&#x27;, &#x27;partnerItemId&#x27;: &#x27;2&#x27;, &#x27;pointsPayerId&#x27;: &#x27;5332f5fbe4b03c9a25efd0ba&#x27;, &#x27;needsFetchReview&#x27;: True, &#x27;userFlaggedPrice&#x27;: &#x27;10.00&#x27;, &#x27;quantityPurchased&#x27;: 1, &#x27;userFlaggedBarcode&#x27;: &#x27;028400642255&#x27;, &#x27;userFlaggedNewItem&#x27;: True, &#x27;userFlaggedQuantity&#x27;: 1, &#x27;needsFetchReviewReason&#x27;: &#x27;USER_FLAGGED&#x27;, &#x27;pointsNotAwardedReason&#x27;: &#x27;Action not allowed for user and CPG&#x27;, &#x27;preventTargetGapPoints&#x27;: True, &#x27;userFlaggedDescription&#x27;: &#x27;DORITOS TORTILLA CHIP SPICY SWEET CHILI REDUCED FAT BAG 1 OZ&#x27;, &#x27;rewardsProductPartnerId&#x27;: &#x27;5332f5fbe4b03c9a25efd0ba&#x27;}], &#x27;bonusPointsEarnedReason&#x27;: &#x27;Receipt number 5 completed, bonus point schedule DEFAULT (5cefdcacf3693e0b50e83a36)&#x27;}</td>
-        </tr>
     </tbody>
 </table>
 </div>
@@ -16475,12 +18632,144 @@ Done.
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span> 
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">CREATE</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="k">REPLACE</span><span class="w"> </span><span class="k">FUNCTION</span><span class="w"> </span><span class="n">insert_receipts_with_logging</span><span class="p">()</span><span class="w"></span>
+<span class="k">RETURNS</span><span class="w"> </span><span class="n">VOID</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="err">$$</span><span class="w"></span>
+<span class="k">DECLARE</span><span class="w"></span>
+<span class="w">    </span><span class="n">json_record</span><span class="w"> </span><span class="n">JSONB</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="n">error_context</span><span class="w"> </span><span class="nb">TEXT</span><span class="p">;</span><span class="w"></span>
+<span class="k">BEGIN</span><span class="w"></span>
+<span class="w">    </span><span class="k">FOR</span><span class="w"> </span><span class="n">json_record</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="k">data</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">receipts_raw</span><span class="w"> </span><span class="n">LOOP</span><span class="w"></span>
+<span class="w">        </span><span class="k">BEGIN</span><span class="w"></span>
+<span class="w">            </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">receipts</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">                </span><span class="n">receipt_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">create_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">date_scanned</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">modify_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">rewards_receipt_status</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">user_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">bonus_points_earned</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">bonus_points_earned_reason</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">points_awarded_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">points_earned</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">purchase_date</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">purchased_item_count</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">total_spent</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="n">finished_date</span><span class="w"></span>
+<span class="w">            </span><span class="p">)</span><span class="w"></span>
+<span class="w">            </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'_id'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$oid'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'createDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="n">TIMESTAMPTZ</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'dateScanned'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="n">TIMESTAMPTZ</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'modifyDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="n">TIMESTAMPTZ</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'rewardsReceiptStatus'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">50</span><span class="p">),</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'userId'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'bonusPointsEarned'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'bonusPointsEarnedReason'</span><span class="p">)::</span><span class="nb">TEXT</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'pointsAwardedDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="n">TIMESTAMPTZ</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'pointsEarned'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'purchaseDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="n">TIMESTAMPTZ</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'purchasedItemCount'</span><span class="p">)::</span><span class="nb">INTEGER</span><span class="p">,</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'totalSpent'</span><span class="p">)::</span><span class="nb">DECIMAL</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="w"></span>
+<span class="w">                </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'finishedDate'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$date'</span><span class="p">)::</span><span class="n">TIMESTAMPTZ</span><span class="w"></span>
+<span class="w">            </span><span class="p">);</span><span class="w"></span>
+
+<span class="w">        </span><span class="k">EXCEPTION</span><span class="w"></span>
+<span class="w">            </span><span class="k">WHEN</span><span class="w"> </span><span class="n">OTHERS</span><span class="w"> </span><span class="k">THEN</span><span class="w"></span>
+<span class="w">                </span><span class="k">GET</span><span class="w"> </span><span class="n">STACKED</span><span class="w"> </span><span class="k">DIAGNOSTICS</span><span class="w"> </span><span class="n">error_context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PG_EXCEPTION_CONTEXT</span><span class="p">;</span><span class="w"></span>
+<span class="w">                </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">error_log</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">                    </span><span class="n">receipt_id</span><span class="p">,</span><span class="w"></span>
+<span class="w">                    </span><span class="n">error_message</span><span class="p">,</span><span class="w"></span>
+<span class="w">                    </span><span class="n">json_data</span><span class="w"></span>
+<span class="w">                </span><span class="p">)</span><span class="w"></span>
+<span class="w">                </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="w"></span>
+<span class="w">                    </span><span class="p">(</span><span class="n">json_record</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s1">'_id'</span><span class="w"> </span><span class="o">-&gt;&gt;</span><span class="w"> </span><span class="s1">'$oid'</span><span class="p">)::</span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">24</span><span class="p">),</span><span class="w"></span>
+<span class="w">                    </span><span class="n">SQLERRM</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">' | Context: '</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">error_context</span><span class="p">,</span><span class="w"></span>
+<span class="w">                    </span><span class="n">json_record</span><span class="w"></span>
+<span class="w">                </span><span class="p">);</span><span class="w"></span>
+<span class="w">        </span><span class="k">END</span><span class="p">;</span><span class="w"></span>
+<span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="n">LOOP</span><span class="p">;</span><span class="w"></span>
+<span class="k">END</span><span class="p">;</span><span class="w"></span>
+<span class="err">$$</span><span class="w"> </span><span class="k">LANGUAGE</span><span class="w"> </span><span class="n">plpgsql</span><span class="p">;</span><span class="w"></span>
 </pre></div>
 
      </div>
 </div>
 </div>
+</div>
+
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[78]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%</span><span class="k">sql</span><span class="w"></span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">receipts</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w"></span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+
+
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain">
+<pre> * postgresql://postgres:***@155.248.207.242:5432/fetch_db
+0 rows affected.
+</pre>
+</div>
+</div>
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[78]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<table>
+    <thead>
+        <tr>
+            <th>receipt_id</th>
+            <th>create_date</th>
+            <th>date_scanned</th>
+            <th>modify_date</th>
+            <th>rewards_receipt_status</th>
+            <th>user_id</th>
+            <th>bouns_points_earned</th>
+            <th>points_awarded_date</th>
+            <th>points_earned</th>
+            <th>purchase_date</th>
+            <th>purchased_item_count</th>
+            <th>total_spend</th>
+            <th>finished_date</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+
 </div>
 
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
